@@ -1,0 +1,55 @@
+name: Build APK
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Setup Java
+        uses: actions/setup-java@v3
+        with:
+          java-version: '17'
+
+      - name: Install Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Build APK
+        run: |
+          mkdir build
+
+          javac -source 1.8 -target 1.8 \
+          -classpath $ANDROID_HOME/platforms/android-33/android.jar \
+          -d build src/MainActivity.java
+
+          dx --dex --output=classes.dex build/
+
+          mkdir -p res/values
+          echo '<resources><string name="app_name">VivekApp</string></resources>' > res/values/strings.xml
+
+          aapt package -f \
+          -M AndroidManifest.xml \
+          -S res \
+          -A assets \
+          -I $ANDROID_HOME/platforms/android-33/android.jar \
+          -F app.apk
+
+          zip -u app.apk classes.dex
+
+      - name: Sign APK
+        run: |
+          keytool -genkey -v -keystore mykey.keystore -alias vivek \
+          -keyalg RSA -keysize 2048 -validity 10000 \
+          -storepass 123456 -keypass 123456 \
+          -dname "CN=Vivek, OU=Dev, O=Dev, L=City, S=State, C=IN"
+
+          $ANDROID_HOME/build-tools/33.0.0/apksigner sign \
+          --ks mykey.keystore \
+          --ks-pass pass:123456 \
+          --out final.apk app.apk
