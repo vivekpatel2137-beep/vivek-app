@@ -20,6 +20,10 @@ jobs:
 
       - name: Install Android SDK
         uses: android-actions/setup-android@v3
+      - name: Install SDK Components
+        run: |
+          sdkmanager "platforms;android-33"
+          sdkmanager "build-tools;33.0.0"
 
       - name: Build APK
         run: |
