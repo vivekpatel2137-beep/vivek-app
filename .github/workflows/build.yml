@@ -20,6 +20,7 @@ jobs:
 
       - name: Install Android SDK
         uses: android-actions/setup-android@v3
+
       - name: Install SDK Components
         run: |
           sdkmanager "platforms;android-33"
@@ -33,18 +34,22 @@ jobs:
           -classpath $ANDROID_HOME/platforms/android-33/android.jar \
           -d build src/MainActivity.java
 
-          dx --dex --output=classes.dex build/
+          # Convert to DEX using d8 (modern tool)
+          $ANDROID_HOME/build-tools/33.0.0/d8 --output . build/
 
+          # Minimal resources
           mkdir -p res/values
           echo '<resources><string name="app_name">VivekApp</string></resources>' > res/values/strings.xml
 
-          aapt package -f \
+          # Create APK
+          $ANDROID_HOME/build-tools/33.0.0/aapt package -f \
           -M AndroidManifest.xml \
           -S res \
           -A assets \
           -I $ANDROID_HOME/platforms/android-33/android.jar \
           -F app.apk
 
+          # Add classes.dex
           zip -u app.apk classes.dex
 
       - name: Sign APK
@@ -58,3 +63,9 @@ jobs:
           --ks mykey.keystore \
           --ks-pass pass:123456 \
           --out final.apk app.apk
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v3
+        with:
+          name: VivekApp
+          path: final.apk
