@@ -65,7 +65,7 @@ jobs:
           --out final.apk app.apk
 
       - name: Upload APK
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: VivekApp
           path: final.apk
